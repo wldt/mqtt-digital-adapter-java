@@ -9,12 +9,10 @@ import it.unimore.dipi.iot.wldt.core.event.WldtEvent;
 import it.unimore.dipi.iot.wldt.core.event.WldtEventBus;
 import it.unimore.dipi.iot.wldt.core.state.*;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
-import it.unimore.dipi.iot.wldt.exception.WldtDigitalTwinStateActionException;
 import it.unimore.dipi.iot.wldt.exception.WldtDigitalTwinStateEventException;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
