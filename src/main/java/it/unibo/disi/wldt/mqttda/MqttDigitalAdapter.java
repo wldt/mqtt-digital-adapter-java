@@ -5,8 +5,6 @@ import it.unibo.disi.wldt.mqttda.topic.outgoing.DigitalTwinOutgoingTopic;
 import it.unibo.disi.wldt.mqttda.topic.outgoing.EventNotificationOutgoingTopic;
 import it.unibo.disi.wldt.mqttda.topic.outgoing.PropertyOutgoingTopic;
 import it.unimore.dipi.iot.wldt.adapter.digital.DigitalAdapter;
-import it.unimore.dipi.iot.wldt.core.event.WldtEvent;
-import it.unimore.dipi.iot.wldt.core.event.WldtEventBus;
 import it.unimore.dipi.iot.wldt.core.state.*;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.exception.WldtDigitalTwinStateEventException;
@@ -183,24 +181,12 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
         try {
             mqttClient.subscribe(topic.getTopic(), topic.getQos(), (t, msg) ->{
                 logger.info("MQTT Digital Adapter -receive message on topic: {}", t);
-                publishEvent(this.getId(), topic.applySubscribeFunction(new String(msg.getPayload())));
+                publishDigitalActionWldtEvent(topic.applySubscribeFunction(new String(msg.getPayload())));
             });
             logger.info("MQTT Digital Adapter - MQTT client subscribed to topic: {}", topic.getTopic());
         } catch (MqttException e) {
             e.printStackTrace();
         }
-    }
-
-    private void publishEvent(String publisher, WldtEvent<?> event){
-        new Thread(() -> {
-            try {
-                WldtEventBus
-                        .getInstance()
-                        .publishEvent(publisher, event);
-            } catch (EventBusException e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 
     private void connectToMqttBroker(){
