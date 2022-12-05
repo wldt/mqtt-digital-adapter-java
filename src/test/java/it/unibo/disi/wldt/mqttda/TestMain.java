@@ -5,7 +5,6 @@ import it.unibo.disi.wldt.mqttda.topic.MqttQosLevel;
 import it.unibo.disi.wldt.mqttda.utils.DefaultShadowingFunction;
 import it.unibo.disi.wldt.mqttda.utils.DummyPhysicalAdapter;
 import it.unibo.disi.wldt.mqttda.utils.DummyPhysicalAdapterConfiguration;
-import it.unimore.dipi.iot.wldt.core.engine.WldtConfiguration;
 import it.unimore.dipi.iot.wldt.core.engine.WldtEngine;
 import it.unimore.dipi.iot.wldt.exception.EventBusException;
 import it.unimore.dipi.iot.wldt.exception.ModelException;
@@ -16,7 +15,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 public class TestMain {
     public static void main(String[] args) throws WldtConfigurationException, ModelException, WldtRuntimeException, EventBusException, MqttDigitalAdapterConfigurationException, MqttException {
 
-        WldtEngine engine = new WldtEngine(new DefaultShadowingFunction(), buildWldtConfiguration());
+        WldtEngine engine = new WldtEngine(new DefaultShadowingFunction(), "mqtt-digital-twin");
         engine.addPhysicalAdapter(new DummyPhysicalAdapter("test-pa", new DummyPhysicalAdapterConfiguration(), true));
 
         MqttDigitalAdapterConfiguration configuration = MqttDigitalAdapterConfiguration.builder("127.0.0.1", 1883)
@@ -30,15 +29,5 @@ public class TestMain {
 
         engine.startLifeCycle();
 
-    }
-
-    private static WldtConfiguration buildWldtConfiguration() {
-
-        //Manual creation of the WldtConfiguration
-        WldtConfiguration wldtConfiguration = new WldtConfiguration();
-        wldtConfiguration.setDeviceNameSpace("it.unimore.dipi.things");
-        wldtConfiguration.setWldtBaseIdentifier("wldt");
-        wldtConfiguration.setWldtStartupTimeSeconds(10);
-        return wldtConfiguration;
     }
 }
