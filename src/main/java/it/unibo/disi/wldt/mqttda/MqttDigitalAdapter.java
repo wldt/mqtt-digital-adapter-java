@@ -181,7 +181,14 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
         try {
             mqttClient.subscribe(topic.getTopic(), topic.getQos(), (t, msg) ->{
                 logger.info("MQTT Digital Adapter -receive message on topic: {}", t);
-                publishDigitalActionWldtEvent(topic.applySubscribeFunction(new String(msg.getPayload())));
+                //TODO: evaluate improvement
+                new Thread(() -> {
+                    try {
+                        publishDigitalActionWldtEvent(topic.applySubscribeFunction(new String(msg.getPayload())));
+                    } catch (EventBusException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             });
             logger.info("MQTT Digital Adapter - MQTT client subscribed to topic: {}", topic.getTopic());
         } catch (MqttException e) {
