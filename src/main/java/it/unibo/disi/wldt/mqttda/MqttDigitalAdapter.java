@@ -97,6 +97,26 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
     }
 
     @Override
+    protected void onStateChangeRelationshipCreated(DigitalTwinStateRelationship<?> digitalTwinStateRelationship) {
+
+    }
+
+    @Override
+    protected void onStateChangeRelationshipInstanceCreated(DigitalTwinStateRelationshipInstance<?> digitalTwinStateRelationshipInstance) {
+
+    }
+
+    @Override
+    protected void onStateChangeRelationshipDeleted(DigitalTwinStateRelationship<?> digitalTwinStateRelationship) {
+
+    }
+
+    @Override
+    protected void onStateChangeRelationshipInstanceDeleted(DigitalTwinStateRelationshipInstance<?> digitalTwinStateRelationshipInstance) {
+
+    }
+
+    @Override
     public void onAdapterStart() {
         connectToMqttBroker();
         getConfiguration().getActionIncomingTopics().values().forEach(this::subscribeClientToDigitalTwinIncomingTopic);

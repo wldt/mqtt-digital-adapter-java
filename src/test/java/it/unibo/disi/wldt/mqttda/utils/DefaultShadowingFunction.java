@@ -4,6 +4,8 @@ import it.unimore.dipi.iot.wldt.adapter.digital.event.DigitalActionWldtEvent;
 import it.unimore.dipi.iot.wldt.adapter.physical.PhysicalAssetDescription;
 import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
 import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceCreatedWldtEvent;
+import it.unimore.dipi.iot.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceDeletedWldtEvent;
 import it.unimore.dipi.iot.wldt.core.model.ShadowingModelFunction;
 import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateAction;
 import it.unimore.dipi.iot.wldt.core.state.DigitalTwinStateEvent;
@@ -125,6 +127,16 @@ public class  DefaultShadowingFunction extends ShadowingModelFunction {
         } catch (WldtDigitalTwinStateEventNotificationException | EventBusException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected void onPhysicalAssetRelationshipEstablished(PhysicalAssetRelationshipInstanceCreatedWldtEvent<?> physicalAssetRelationshipWldtEvent) {
+
+    }
+
+    @Override
+    protected void onPhysicalAssetRelationshipDeleted(PhysicalAssetRelationshipInstanceDeletedWldtEvent<?> physicalAssetRelationshipWldtEvent) {
+
     }
 
     @Override

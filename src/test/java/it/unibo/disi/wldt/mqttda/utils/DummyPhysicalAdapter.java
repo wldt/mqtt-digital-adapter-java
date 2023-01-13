@@ -49,11 +49,11 @@ public class DummyPhysicalAdapter extends ConfigurablePhysicalAdapter<DummyPhysi
         try{
             logger.info("Received PhysicalActionEventMessage: {}", physicalActionEvent);
 
-            if(physicalActionEvent != null && physicalActionEvent.getType().equals(PhysicalAssetActionWldtEvent.buildEventType(SWITCH_ON_ACTION_KEY))) {
+            if(physicalActionEvent != null && physicalActionEvent.getActionKey().equals(SWITCH_ON_ACTION_KEY)) {
                 logger.info("{} Received ! Switching ON the device ...", physicalActionEvent.getType());
                 Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
                 WldtEventBus.getInstance().publishEvent(getId(), new PhysicalAssetPropertyWldtEvent<>(SWITCH_PROPERTY_KEY, "ON"));
-            } else if(physicalActionEvent != null && physicalActionEvent.getType().equals(PhysicalAssetActionWldtEvent.buildEventType(SWITCH_OFF_ACTION_KEY))){
+            } else if(physicalActionEvent != null && physicalActionEvent.getActionKey().equals(SWITCH_OFF_ACTION_KEY)){
                 logger.info("{} Received ! Switching OFF the device ...", physicalActionEvent.getType());
                 Thread.sleep(MESSAGE_SLEEP_PERIOD_MS);
                 WldtEventBus.getInstance().publishEvent(getId(), new PhysicalAssetPropertyWldtEvent<>(SWITCH_PROPERTY_KEY, "OFF"));
