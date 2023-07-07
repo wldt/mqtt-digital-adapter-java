@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
+    <groupId>it.wldt</groupId>
     <artifactId>mqtt-digital-adapter</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -51,11 +51,10 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
-            <groupId>it.unimore.dipi.iot</groupId>
+            <groupId>it.wldt</groupId>
             <artifactId>wldt-core</artifactId>
-            <version>0.2</version>
+            <version>0.1</version>
             <scope>compile</scope>
         </dependency>
 
