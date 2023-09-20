@@ -18,7 +18,7 @@ dependencies {
     api("com.github.spullara.mustache.java:compiler:0.9.10")
     api("ch.qos.logback:logback-classic:1.0.13")
     api("com.google.code.gson:gson:2.10")
-    api("it.wldt:wldt-core:0.1")
+    api("io.github.wldt:wldt-core:0.2.1")
     testImplementation("junit:junit:4.13.2")
 }
 
