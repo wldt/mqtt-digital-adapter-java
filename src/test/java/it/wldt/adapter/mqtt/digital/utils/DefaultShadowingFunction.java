@@ -121,7 +121,8 @@ public class  DefaultShadowingFunction extends ShadowingFunction {
             //NEW from 0.3.0 -> Start State Transaction
             this.digitalTwinStateManager.startStateTransaction();
 
-            this.digitalTwinStateManager.updateProperty(
+            // Update Property Value
+            this.digitalTwinStateManager.updatePropertyValue(
                     new DigitalTwinStateProperty<>(
                             physicalPropertyEventMessage.getPhysicalPropertyId(),
                             physicalPropertyEventMessage.getBody()));

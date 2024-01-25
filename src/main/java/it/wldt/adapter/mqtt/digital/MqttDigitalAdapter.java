@@ -68,9 +68,9 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
                 DigitalTwinStateChange.ResourceType resourceType = stateChange.getResourceType();
                 DigitalTwinStateResource resource = stateChange.getResource();
 
-                // Search for property value variation
-                if((resourceType.equals(DigitalTwinStateChange.ResourceType.PROPERTY) || resourceType.equals(DigitalTwinStateChange.ResourceType.PROPERTY_VALUE)) &&
-                        operation.equals(DigitalTwinStateChange.Operation.OPERATION_UPDATE) && resource instanceof DigitalTwinStateProperty){
+                // Search for property variation or a property value variation
+                if((((resourceType.equals(DigitalTwinStateChange.ResourceType.PROPERTY) && operation.equals(DigitalTwinStateChange.Operation.OPERATION_UPDATE)) || ((resourceType.equals(DigitalTwinStateChange.ResourceType.PROPERTY_VALUE)) && operation.equals(DigitalTwinStateChange.Operation.OPERATION_UPDATE_VALUE)))
+                        && (resource instanceof DigitalTwinStateProperty))){
 
                     DigitalTwinStateProperty<?> digitalTwinStateProperty = (DigitalTwinStateProperty<?>) resource;
 
