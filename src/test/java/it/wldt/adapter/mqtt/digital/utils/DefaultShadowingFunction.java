@@ -6,7 +6,7 @@ import it.wldt.adapter.physical.event.PhysicalAssetEventWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetPropertyWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceCreatedWldtEvent;
 import it.wldt.adapter.physical.event.PhysicalAssetRelationshipInstanceDeletedWldtEvent;
-import it.wldt.core.model.ShadowingModelFunction;
+import it.wldt.core.model.ShadowingFunction;
 import it.wldt.core.state.DigitalTwinStateAction;
 import it.wldt.core.state.DigitalTwinStateEvent;
 import it.wldt.core.state.DigitalTwinStateEventNotification;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class  DefaultShadowingFunction extends ShadowingModelFunction {
+public class  DefaultShadowingFunction extends ShadowingFunction {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultShadowingFunction.class);
 
@@ -44,51 +44,61 @@ public class  DefaultShadowingFunction extends ShadowingModelFunction {
     @Override
     protected void onDigitalTwinBound(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
         logger.debug("Shadowing - onDtBound");
-        startShadowing(adaptersPhysicalAssetDescriptionMap);
         try {
+
+            startShadowing(adaptersPhysicalAssetDescriptionMap);
+
+            // Observe all available properties
             this.observePhysicalAssetProperties(adaptersPhysicalAssetDescriptionMap.values()
                     .stream()
                     .flatMap(pad -> pad.getProperties().stream())
                     .collect(Collectors.toList()));
+
             //observes all the available events
             this.observePhysicalAssetEvents(adaptersPhysicalAssetDescriptionMap.values()
                     .stream()
                     .flatMap(pad -> pad.getEvents().stream())
                     .collect(Collectors.toList()));
             observeDigitalActionEvents();
-        } catch (EventBusException | ModelException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void startShadowing(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) {
+    private void startShadowing(Map<String, PhysicalAssetDescription> adaptersPhysicalAssetDescriptionMap) throws WldtDigitalTwinStateException {
+
+        // NEW in 0.3.0 -> Start DT State Change Transaction
+        this.digitalTwinStateManager.startStateTransaction();
+
         adaptersPhysicalAssetDescriptionMap.forEach((id, pad) -> {
             pad.getProperties()
                     .forEach(p -> {
                         try {
-                            this.digitalTwinState.createProperty(new DigitalTwinStateProperty<>(p.getKey(), p.getInitialValue()));
-                        } catch (WldtDigitalTwinStateException | WldtDigitalTwinStatePropertyBadRequestException
-                                 | WldtDigitalTwinStatePropertyConflictException | WldtDigitalTwinStatePropertyException e) {
+                            this.digitalTwinStateManager.createProperty(new DigitalTwinStateProperty<>(p.getKey(), p.getInitialValue()));
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     });
             pad.getActions().forEach(a -> {
                 try {
-                    this.digitalTwinState.enableAction(new DigitalTwinStateAction(a.getKey(), a.getType(), a.getContentType()));
-                } catch (WldtDigitalTwinStateActionException | WldtDigitalTwinStateActionConflictException
-                         | WldtDigitalTwinStateException e) {
+                    this.digitalTwinStateManager.enableAction(new DigitalTwinStateAction(a.getKey(), a.getType(), a.getContentType()));
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
             pad.getEvents().forEach(e -> {
                 try {
-                    this.digitalTwinState.registerEvent(new DigitalTwinStateEvent(e.getKey(), e.getType()));
-                } catch (WldtDigitalTwinStateEventException | WldtDigitalTwinStateEventConflictException ex) {
+                    this.digitalTwinStateManager.registerEvent(new DigitalTwinStateEvent(e.getKey(), e.getType()));
+                } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             });
-            notifyShadowingSync();
         });
+
+        // NEW in 0.3.0 -> Commit DT State Change Transaction to apply the changes on the DT State and notify about the change
+        this.digitalTwinStateManager.commitStateTransaction();
+
+        notifyShadowingSync();
     }
 
     @Override
@@ -106,12 +116,20 @@ public class  DefaultShadowingFunction extends ShadowingModelFunction {
         logger.info("Shadowing - onPAPropertyVariation - property event: {} ", physicalPropertyEventMessage);
         //Update Digital Twin Status
         try {
-            this.digitalTwinState.updateProperty(
+
+            //Update Digital Twin State
+            //NEW from 0.3.0 -> Start State Transaction
+            this.digitalTwinStateManager.startStateTransaction();
+
+            this.digitalTwinStateManager.updateProperty(
                     new DigitalTwinStateProperty<>(
                             physicalPropertyEventMessage.getPhysicalPropertyId(),
                             physicalPropertyEventMessage.getBody()));
-        } catch (WldtDigitalTwinStatePropertyException | WldtDigitalTwinStatePropertyBadRequestException
-                | WldtDigitalTwinStatePropertyNotFoundException | WldtDigitalTwinStateException e) {
+
+            //NEW from 0.3.0 -> Commit State Transaction
+            this.digitalTwinStateManager.commitStateTransaction();
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -120,7 +138,7 @@ public class  DefaultShadowingFunction extends ShadowingModelFunction {
     protected void onPhysicalAssetEventNotification(PhysicalAssetEventWldtEvent<?> physicalAssetEventWldtEvent) {
         logger.info("Shadowing - onPAEventNotification - received Event:{}", physicalAssetEventWldtEvent);
         try {
-            this.digitalTwinState.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(
+            this.digitalTwinStateManager.notifyDigitalTwinStateEvent(new DigitalTwinStateEventNotification<>(
                     physicalAssetEventWldtEvent.getPhysicalEventKey(),
                     (String) physicalAssetEventWldtEvent.getBody(),
                     System.currentTimeMillis()));
