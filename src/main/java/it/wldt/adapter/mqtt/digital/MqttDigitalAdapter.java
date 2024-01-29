@@ -198,7 +198,12 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
 
     }
 
-
+    /**
+     * Publishes a message on the specified Digital Twin outgoing topic using MQTT.
+     *
+     * @param topic   The Digital Twin outgoing topic to publish the message on.
+     * @param payload The message payload to be published.
+     */
     private void publishOnDigitalTwinOutgoingTopic(DigitalTwinOutgoingTopic<?> topic, String payload){
         try {
             MqttMessage msg = new MqttMessage(payload.getBytes());
@@ -211,6 +216,12 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
         }
     }
 
+    /**
+     * Subscribes the MQTT client to the specified Digital Twin incoming topic.
+     * Upon receiving a message, it invokes the corresponding function to publish a Digital Action Wldt Event.
+     *
+     * @param topic The Digital Twin incoming topic to subscribe to.
+     */
     private void subscribeClientToDigitalTwinIncomingTopic(DigitalTwinIncomingTopic topic) {
         try {
             mqttClient.subscribe(topic.getTopic(), topic.getQos(), (t, msg) ->{
@@ -230,6 +241,10 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
         }
     }
 
+    /**
+     * Connects the MQTT client to the configured broker using the provided connection options.
+     * Logs information about the successful connection.
+     */
     private void connectToMqttBroker(){
         try {
             mqttClient.connect(getConfiguration().getConnectOptions());
