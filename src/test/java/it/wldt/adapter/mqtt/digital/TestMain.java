@@ -7,11 +7,24 @@ import it.wldt.adapter.mqtt.digital.utils.DummyPhysicalAdapterConfiguration;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.core.engine.DigitalTwinEngine;
 
+/**
+ * The `TestMain` class serves as the entry point for a demonstration of Digital Twin components. It creates a
+ * Digital Twin instance, assigns a Dummy Physical Adapter to simulate physical variations, configures an MQTT Digital
+ * Adapter, and adds them to the Digital Twin. Finally, it initiates the Digital Twin Engine and starts the simulation.
+ * This serves as a test scenario for the integration of Digital Twin components.
+ */
 public class TestMain {
+
+    /**
+     * The main method, the starting point of the demonstration.
+     *
+     * @param args Command line arguments (unused).
+     */
     public static void main(String[] args) {
 
         try {
 
+            // Create a Digital Twin instance named "mqtt-digital-twin" with a DefaultShadowingFunction
             DigitalTwin digitalTwin = new DigitalTwin("mqtt-digital-twin", new DefaultShadowingFunction());
 
             // Create and assign a Demo Physical Adapter generating random physical variation to test the MQTT Digital Adapter
