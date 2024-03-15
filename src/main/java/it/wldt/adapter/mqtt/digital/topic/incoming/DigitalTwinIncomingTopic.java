@@ -12,7 +12,6 @@ import it.wldt.adapter.digital.event.DigitalActionWldtEvent;
  * The {@code DigitalTwinIncomingTopic} class encapsulates the logic for
  * applying the subscription function to the incoming message payload and
  * returning a {@link DigitalActionWldtEvent} representing the digital twin action.
- * </p>
  **
  * @see MqttTopic
  * @see MqttSubscribeDigitalFunction
