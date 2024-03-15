@@ -11,14 +11,15 @@ plugins {
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
     api("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
     api("com.github.spullara.mustache.java:compiler:0.9.10")
-    api("ch.qos.logback:logback-classic:1.0.13")
+    api("ch.qos.logback:logback-classic:1.4.12")
     api("com.google.code.gson:gson:2.10")
-    api("io.github.wldt:wldt-core:0.2.1")
+    api("io.github.wldt:wldt-core:0.3.0")
     testImplementation("junit:junit:4.13.2")
 }
 
@@ -40,7 +41,7 @@ tasks.withType<Javadoc>() {
 
 
 group = "io.github.wldt"
-version = "0.1.0"
+version = "0.1.1"
 description = "Digital adapter to output data with the MQTT protocol"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 
