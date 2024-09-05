@@ -143,7 +143,7 @@ public class  DefaultShadowingFunction extends ShadowingFunction {
                     physicalAssetEventWldtEvent.getPhysicalEventKey(),
                     (String) physicalAssetEventWldtEvent.getBody(),
                     System.currentTimeMillis()));
-        } catch (WldtDigitalTwinStateEventNotificationException | EventBusException e) {
+        } catch (WldtDigitalTwinStateEventNotificationException e) {
             e.printStackTrace();
         }
     }
