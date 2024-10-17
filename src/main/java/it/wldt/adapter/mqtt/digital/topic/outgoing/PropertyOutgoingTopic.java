@@ -35,4 +35,17 @@ public class PropertyOutgoingTopic<T> extends DigitalTwinOutgoingTopic<DigitalTw
     public PropertyOutgoingTopic(String topic, MqttQosLevel qosLevel, Function<T, String> propertyValueToString) {
         super(topic, qosLevel, dtStateProperty -> propertyValueToString.apply(dtStateProperty.getValue()));
     }
+
+    /**
+     * Constructs a {@code PropertyOutgoingTopic} with the specified topic, QoS level,
+     * and function for converting the property value to a string.
+     *
+     * @param topic                  The topic to publish outgoing properties to.
+     * @param qosLevel               The quality of service level for message delivery.
+     * @param isRetained             The retained flag.
+     * @param propertyValueToString The function to apply for converting the property value to a string.
+     */
+    public PropertyOutgoingTopic(String topic, MqttQosLevel qosLevel, boolean isRetained, Function<T, String> propertyValueToString) {
+        super(topic, qosLevel, isRetained, dtStateProperty -> propertyValueToString.apply(dtStateProperty.getValue()));
+    }
 }

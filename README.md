@@ -29,10 +29,11 @@ a test MQTT consumer.
 
 The correct mapping and compatibility between versions is reported in the following table
 
-| **mqtt-digital-adapter** |   wldt-core 0.2.1  |   wldt-core 0.3.0  |
-|:------------------------:|:------------------:|:------------------:|
-|          0.1.0           | :white_check_mark: |         :x:        |
-|          0.1.1           |         :x:        | :white_check_mark: |
+| **mqtt-digital-adapter** |   wldt-core 0.2.1  |   wldt-core 0.3.0  |   wldt-core 0.4.0  |
+|:------------------------:|:------------------:|:------------------:|:------------------:|
+|          0.1.0           | :white_check_mark: |         :x:        |         :x:        |
+|          0.1.1           |         :x:        | :white_check_mark: | :white_check_mark: |
+|          0.1.2           |         :x:        | :white_check_mark: | :white_check_mark: |
 
 ## Installation
 
@@ -44,14 +45,14 @@ To use MqttDigitalAdapter in your Java project, you can include it as a dependen
 <dependency>
     <groupId>io.github.wldt</groupId>
     <artifactId>mqtt-digital-adapter</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'io.github.wldt:mqtt-digital-adapter:0.1.1'
+implementation 'io.github.wldt:mqtt-digital-adapter:0.1.2'
 ```
 
 ## Class Structure & Functionalities

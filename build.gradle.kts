@@ -41,7 +41,7 @@ tasks.withType<Javadoc>() {
 
 
 group = "io.github.wldt"
-version = "0.1.1"
+version = "0.1.2"
 description = "Digital adapter to output data with the MQTT protocol"
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 

@@ -41,6 +41,20 @@ public class DigitalTwinOutgoingTopic<T> extends MqttTopic {
     }
 
     /**
+     * Constructs a {@code DigitalTwinOutgoingTopic} with the specified topic, QoS level,
+     * and function for publishing digital twin state components.
+     *
+     * @param topic                  The topic to publish outgoing messages to.
+     * @param qosLevel               The quality of service level for message delivery.
+     * @param isRetained             The retained flag.
+     * @param publishDigitalFunction The function to apply for publishing digital twin state components.
+     */
+    public DigitalTwinOutgoingTopic(String topic, MqttQosLevel qosLevel, boolean isRetained, MqttPublishDigitalFunction<T> publishDigitalFunction) {
+        super(topic, qosLevel, isRetained);
+        this.publishDigitalFunction = publishDigitalFunction;
+    }
+
+    /**
      * Applies the publishing function to the provided digital twin state property component.
      * Converts the component into a message payload for publishing.
      *

@@ -208,7 +208,7 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
         try {
             MqttMessage msg = new MqttMessage(payload.getBytes());
             msg.setQos(topic.getQos());
-            msg.setRetained(true);
+            msg.setRetained(topic.isRetained());
             mqttClient.publish(topic.getTopic(), msg);
             logger.info("MQTT Digital Adapter - MQTT client published message: {} on topic: {}", payload, topic.getTopic());
         } catch (MqttException e) {

@@ -76,6 +76,29 @@ public class MqttDigitalAdapterConfigurationBuilder {
     }
 
     /**
+     * Adds a property update topic to the MQTT Digital Adapter configuration. The property is associated with a specified
+     * key, MQTT topic, Quality of Service (QoS) level, and a function to convert the property value to its MQTT payload.
+     *
+     * @param <T> The type of the property value.
+     * @param propertyKey The key associated with the property.
+     * @param topic The MQTT topic for property updates.
+     * @param qosLevel The Quality of Service (QoS) level for the MQTT topic.
+     * @param isRetained The retained flag.
+     * @param propertyToPayloadFunction The function to convert the property value to its MQTT payload.
+     * @return The updated `MqttDigitalAdapterConfigurationBuilder`.
+     * @throws MqttDigitalAdapterConfigurationException Thrown when the key, topic, or payload function is invalid.
+     */
+    public <T> MqttDigitalAdapterConfigurationBuilder addPropertyTopic(String propertyKey,
+                                                                       String topic,
+                                                                       MqttQosLevel qosLevel,
+                                                                       boolean isRetained,
+                                                                       Function<T, String> propertyToPayloadFunction) throws MqttDigitalAdapterConfigurationException {
+        checkTopic(propertyKey, topic, propertyToPayloadFunction);
+        this.configuration.getPropertyUpdateTopics().put(propertyKey, new PropertyOutgoingTopic<>(topic, qosLevel, isRetained, propertyToPayloadFunction));
+        return this;
+    }
+
+    /**
      * Adds an event notification topic to the MQTT Digital Adapter configuration. The event is associated with a specified
      * key, MQTT topic, Quality of Service (QoS) level, and a function to convert the event to its MQTT payload.
      *
@@ -93,6 +116,29 @@ public class MqttDigitalAdapterConfigurationBuilder {
                                                                                 Function<T, String> eventToPayloadFunction) throws  MqttDigitalAdapterConfigurationException{
         checkTopic(eventKey, topic, eventToPayloadFunction);
         this.configuration.getEventNotificationTopics().put(eventKey, new EventNotificationOutgoingTopic<>(topic, qosLevel, eventToPayloadFunction));
+        return this;
+    }
+
+    /**
+     * Adds an event notification topic to the MQTT Digital Adapter configuration. The event is associated with a specified
+     * key, MQTT topic, Quality of Service (QoS) level, and a function to convert the event to its MQTT payload.
+     *
+     * @param <T> The type of the event value.
+     * @param eventKey The key associated with the event.
+     * @param topic The MQTT topic for event notifications.
+     * @param qosLevel The Quality of Service (QoS) level for the MQTT topic.
+     * @param isRetained The retained flag.
+     * @param eventToPayloadFunction The function to convert the event value to its MQTT payload.
+     * @return The updated `MqttDigitalAdapterConfigurationBuilder`.
+     * @throws MqttDigitalAdapterConfigurationException Thrown when the key, topic, or payload function is invalid.
+     */
+    public <T> MqttDigitalAdapterConfigurationBuilder addEventNotificationTopic(String eventKey,
+                                                                                String topic,
+                                                                                MqttQosLevel qosLevel,
+                                                                                boolean isRetained,
+                                                                                Function<T, String> eventToPayloadFunction) throws  MqttDigitalAdapterConfigurationException{
+        checkTopic(eventKey, topic, eventToPayloadFunction);
+        this.configuration.getEventNotificationTopics().put(eventKey, new EventNotificationOutgoingTopic<>(topic, qosLevel, isRetained, eventToPayloadFunction));
         return this;
     }
 

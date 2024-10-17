@@ -34,4 +34,17 @@ public class EventNotificationOutgoingTopic<T> extends DigitalTwinOutgoingTopic<
     public EventNotificationOutgoingTopic(String topic, MqttQosLevel qosLevel, Function<T, String> notificationBodyToString) {
         super(topic, qosLevel, eventNotification -> notificationBodyToString.apply(eventNotification.getBody()));
     }
+
+    /**
+     * Constructs an {@code EventNotificationOutgoingTopic} with the specified topic, QoS level,
+     * and function for converting the notification body to a string.
+     *
+     * @param topic                The topic to publish outgoing event notifications to.
+     * @param qosLevel             The quality of service level for message delivery.
+     * @param isRetained           The retained flag.
+     * @param notificationBodyToString The function to apply for converting the notification body to a string.
+     */
+    public EventNotificationOutgoingTopic(String topic, MqttQosLevel qosLevel, boolean isRetained, Function<T, String> notificationBodyToString) {
+        super(topic, qosLevel, isRetained, eventNotification -> notificationBodyToString.apply(eventNotification.getBody()));
+    }
 }

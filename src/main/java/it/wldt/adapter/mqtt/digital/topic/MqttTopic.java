@@ -29,6 +29,11 @@ public class MqttTopic {
     private MqttQosLevel qosLevel = MqttQosLevel.MQTT_QOS_0;
 
     /**
+     * The retained flag
+     */
+    private boolean isRetained = false;
+
+    /**
      * Constructs an {@code MqttTopic} with the specified topic string.
      *
      * @param topic The string representing the MQTT topic.
@@ -46,6 +51,18 @@ public class MqttTopic {
     public MqttTopic(String topic, MqttQosLevel qosLevel) {
         this.topic = topic;
         this.qosLevel = qosLevel;
+    }
+
+    /**
+     * Constructs an {@code MqttTopic} with the specified topic string and QoS level.
+     *
+     * @param topic    The string representing the MQTT topic.
+     * @param qosLevel The Quality of Service (QoS) level for message delivery.
+     */
+    public MqttTopic(String topic, MqttQosLevel qosLevel, boolean isRetained) {
+        this.topic = topic;
+        this.qosLevel = qosLevel;
+        this.isRetained = isRetained;
     }
 
     /**
@@ -73,5 +90,23 @@ public class MqttTopic {
      */
     public void setQosLevel(MqttQosLevel qosLevel) {
         this.qosLevel = qosLevel;
+    }
+
+    /**
+     * Gets the retained flag for the message.
+     *
+     * @return The retained flag.
+     */
+    public boolean isRetained() {
+        return isRetained;
+    }
+
+    /**
+     * Sets the retained flag for the message.
+     *
+     * @param retained The retained flag to set.
+     */
+    public void setRetained(boolean retained) {
+        isRetained = retained;
     }
 }
