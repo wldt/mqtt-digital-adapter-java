@@ -1,12 +1,19 @@
 package it.wldt.adapter.mqtt.digital;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import it.wldt.adapter.mqtt.digital.exception.MqttDigitalAdapterConfigurationException;
+import it.wldt.adapter.mqtt.digital.model.MqttDigitalAdapterFileConfiguration;
 import it.wldt.adapter.mqtt.digital.topic.MqttQosLevel;
 import it.wldt.adapter.mqtt.digital.topic.incoming.ActionIncomingTopic;
 import it.wldt.adapter.mqtt.digital.topic.outgoing.EventNotificationOutgoingTopic;
 import it.wldt.adapter.mqtt.digital.topic.outgoing.PropertyOutgoingTopic;
 import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Random;
 import java.util.function.Function;
 
 /**
@@ -51,7 +58,189 @@ public class MqttDigitalAdapterConfigurationBuilder {
     public MqttDigitalAdapterConfigurationBuilder(String brokerAddress, Integer brokerPort, String clientId) throws MqttDigitalAdapterConfigurationException {
         if(!isValid(brokerAddress) || isValid(brokerPort) || !isValid(clientId))
             throw new MqttDigitalAdapterConfigurationException("Broker Address and Client Id cannot be empty string or null and Broker Port must be a positive number");
-        configuration = new MqttDigitalAdapterConfiguration(brokerAddress, brokerPort);
+        configuration = new MqttDigitalAdapterConfiguration(brokerAddress, brokerPort, clientId);
+    }
+
+    /**
+     * Constructs a new instance of the `MqttDigitalAdapterConfigurationBuilder` with the specified broker address,
+     * broker port, client ID, Username and Password It initializes the configuration with default values.
+     *
+     * @param brokerAddress The address of the MQTT broker.
+     * @param brokerPort The port number on which the MQTT broker is listening.
+     * @param clientId The client ID for the MQTT connection.
+     * @param username The username for the MQTT connection.
+     * @param password The password for the MQTT connection.
+     * @throws MqttDigitalAdapterConfigurationException Thrown when the broker address or client ID is empty or null,
+     *                                                    or the broker port is not a positive number.
+     */
+    public MqttDigitalAdapterConfigurationBuilder(String brokerAddress, Integer brokerPort, String clientId, String username, String password) throws MqttDigitalAdapterConfigurationException {
+        if(!isValid(brokerAddress) || isValid(brokerPort) || !isValid(clientId) || !isValid(username) || !isValid(password))
+            throw new MqttDigitalAdapterConfigurationException("Broker Address, Client Id, Username or Password cannot be empty string or null and Broker Port must be a positive number");
+        configuration = new MqttDigitalAdapterConfiguration(brokerAddress, brokerPort, clientId, username, password);
+    }
+
+    /**
+     * Constructs a new instance of the `MqttDigitalAdapterConfigurationBuilder` with the specified broker address,
+     * broker port, client ID and Access Token It initializes the configuration with default values.
+     *
+     * @param brokerAddress The address of the MQTT broker.
+     * @param brokerPort The port number on which the MQTT broker is listening.
+     * @param clientId The client ID for the MQTT connection.
+     * @param accessToken The access token for the MQTT connection.
+     * @throws MqttDigitalAdapterConfigurationException Thrown when the broker address or client ID is empty or null,
+     *                                                    or the broker port is not a positive number.
+     */
+    public MqttDigitalAdapterConfigurationBuilder(String brokerAddress, Integer brokerPort, String clientId, String accessToken) throws MqttDigitalAdapterConfigurationException {
+        if(!isValid(brokerAddress) || isValid(brokerPort) || !isValid(clientId) || !isValid(accessToken))
+            throw new MqttDigitalAdapterConfigurationException("Broker Address, Client Id or Access Token cannot be empty string or null and Broker Port must be a positive number");
+        configuration = new MqttDigitalAdapterConfiguration(brokerAddress, brokerPort, clientId, accessToken);
+    }
+
+    /**
+     * Constructs a builder with the required parameters for creating MqttDigitalAdapterConfiguration.
+     *
+     * @param jsonFile      The json file with all the configuration parameters.
+     * @throws MqttDigitalAdapterConfigurationException If the provided parameters are invalid.
+     */
+    public MqttDigitalAdapterConfigurationBuilder(File jsonFile) throws MqttDigitalAdapterConfigurationException {
+        if(!isValid(jsonFile))
+            throw new MqttDigitalAdapterConfigurationException("Configuration file must exists, must be a file and it must be read.");
+        MqttDigitalAdapterFileConfiguration fileConfig = getMqttFileConfiguration(jsonFile);
+
+        if(!isValid(fileConfig.getMqttClientId())) { fileConfig.setMqttClientId("wldt.mqtt.client."+new Random(System.currentTimeMillis()).nextInt()); }
+        if(fileConfig.getAccessToken() != null && !fileConfig.getAccessToken().isEmpty()) {
+            configuration = new MqttDigitalAdapterConfiguration(fileConfig.getMqttBroker(), fileConfig.getMqttPort(), fileConfig.getMqttClientId(), fileConfig.getAccessToken());
+        } else {
+            configuration = new MqttDigitalAdapterConfiguration(fileConfig.getMqttBroker(), fileConfig.getMqttPort(), fileConfig.getMqttClientId(), fileConfig.getMqttUsername(), fileConfig.getMqttPassword());
+        }
+        configuration.setBaseTopic(fileConfig.getMqttBaseTopic());
+        try {
+            for (HashMap<String, Object> topicMap : fileConfig.getMqttTopicList()) {
+
+                MqttQosLevel qosLevel = null;
+                if((int) topicMap.get("qos") == 0) {
+                    qosLevel = MqttQosLevel.MQTT_QOS_0;
+                } else if ((int) topicMap.get("qos") == 1) {
+                    qosLevel = MqttQosLevel.MQTT_QOS_1;
+                } else if ((int) topicMap.get("qos") == 2) {
+                    qosLevel = MqttQosLevel.MQTT_QOS_2;
+                }
+
+                if(topicMap.get("type").equals("property")) {
+                    if(topicMap.get("function_type").equals("number")) {
+                        if(topicMap.get("initial_value") instanceof Integer) {
+                            addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, value -> Integer.toString((int) value));
+                        } else if (topicMap.get("initial_value") instanceof Double) {
+                            addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, value -> Double.toString((double) value));
+                        }
+                    } else if(topicMap.get("function_type").equals("string")) {
+                        addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, String::valueOf);
+                    } else if(topicMap.get("function_type").equals("boolean")) {
+                        addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, value -> Boolean.toString((boolean) value));
+                    } else if(topicMap.get("function_type").equals("bytes")) {
+                        addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, MqttDigitalAdapterConfigurationBuilder::fromStringToBytes);
+                    } else if(topicMap.get("function_type").equals("json")) {
+                        addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, ObjectNode::toString);
+                    } else {
+                        throw new MqttDigitalAdapterConfigurationException("Wrong function type passed in file configuration. Property function can be number, string, boolean, bytes or json");
+                    }
+                } else if(topicMap.get("type").equals("event")) {
+                    if(topicMap.get("function_type").equals("number")) {
+                        if(topicMap.get("initial_value") instanceof Integer) {
+                            addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, value -> Integer.toString((int) value));
+                        } else if (topicMap.get("initial_value") instanceof Double) {
+                            addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, value -> Double.toString((double) value));
+                        }
+                    } else if(topicMap.get("function_type").equals("string")) {
+                        addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, String::valueOf);
+                    } else if(topicMap.get("function_type").equals("boolean")) {
+                        addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, value -> Boolean.toString((boolean) value));
+                    } else if(topicMap.get("function_type").equals("bytes")) {
+                        addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, MqttDigitalAdapterConfigurationBuilder::fromStringToBytes);
+                    } else if(topicMap.get("function_type").equals("json")) {
+                        addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, ObjectNode::toString);
+                    } else {
+                        throw new MqttDigitalAdapterConfigurationException("Wrong function type passed in file configuration. Event function can be number, string, boolean, bytes or json");
+                    }
+                } else if(topicMap.get("type").equals("action")) {
+                    if(topicMap.get("function_type").equals("number")) {
+                        if(topicMap.get("initial_value") instanceof Integer) {
+                            addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), Integer::parseInt);
+                        } else if (topicMap.get("initial_value") instanceof Double) {
+                            addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), Double::parseDouble);
+                        }
+                    } else if(topicMap.get("function_type").equals("string")) {
+                        addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), String::valueOf);
+                    } else if(topicMap.get("function_type").equals("boolean")) {
+                        addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), Boolean::parseBoolean);
+                    } else if(topicMap.get("function_type").equals("bytes")) {
+                        addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), MqttDigitalAdapterConfigurationBuilder::parseBytesFromString);
+                    } else if(topicMap.get("function_type").equals("json")) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), value -> {
+                            try {
+                                return mapper.readTree(value);
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    } else {
+                        throw new MqttDigitalAdapterConfigurationException("Wrong function type passed in file configuration. Action function can be number, string, boolean, bytes or json");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new MqttDigitalAdapterConfigurationException("Error occurred during topic list read in configuration file.");
+
+        }
+    }
+
+    private static byte[] parseBytesFromString(String intArrayString) {
+
+        if (intArrayString.trim().equals("[]")) {
+            return new byte[0]; // Return an empty byte array
+        }
+
+        try {
+            // Remove square brackets and split the string
+            String cleanedString = intArrayString.replaceAll("[\\[\\]]", ""); // Remove square brackets
+            String[] intStrings = cleanedString.split(","); // Split by comma
+
+            // Convert to byte array
+            byte[] byteArray = new byte[intStrings.length];
+            for (int i = 0; i < intStrings.length; i++) {
+                byteArray[i] = (byte) Integer.parseInt(intStrings[i].trim());
+            }
+
+            return byteArray;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Input string contains invalid integers.", e);
+        }
+    }
+
+    private static String fromStringToBytes(byte[] byteArray) {
+        if (byteArray.length == 0) {
+            return "[]"; // Return an empty array representation
+        }
+
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < byteArray.length; i++) {
+            sb.append(byteArray[i] & 0xFF); // Ensure the byte is treated as unsigned
+            if (i < byteArray.length - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private MqttDigitalAdapterFileConfiguration getMqttFileConfiguration(File jsonFile) throws MqttDigitalAdapterConfigurationException {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(jsonFile, MqttDigitalAdapterFileConfiguration.class);
+        } catch (Exception e) {
+            throw new MqttDigitalAdapterConfigurationException("Error occurred when reading mqtt physical adapter configuration file.");
+        }
     }
 
     /**
@@ -261,5 +450,15 @@ public class MqttDigitalAdapterConfigurationBuilder {
      */
     private boolean isValid(int param){
         return param <= 0;
+    }
+
+    /**
+     * Checks if the given file parameter is valid (exists, is a file, can be read).
+     *
+     * @param param The file parameter to be checked.
+     * @return true if the file exists, is a file and can be read.
+     */
+    private boolean isValid(File param){
+        return param.exists() && param.isFile() && param.canRead();
     }
 }

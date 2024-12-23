@@ -7,7 +7,9 @@ import it.wldt.adapter.mqtt.digital.topic.outgoing.PropertyOutgoingTopic;
 import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -39,20 +41,40 @@ public class MqttDigitalAdapterConfiguration {
     private String password;
 
     /**
+     * The `token` is an optional field that holds the token for authenticating with the MQTT broker, if required.
+     */
+    private String accessToken;
+
+    /**
      * The `clientId` is a unique identifier for the MQTT connection and is used to distinguish different clients.
      */
     private final String clientId;
 
     /**
+     * The Base topic applied before every topic.
+     */
+    private String baseTopic;
+
+    /**
      * The `cleanSessionFlag` is a boolean flag indicating whether a clean session should be used for the MQTT connection.
      * If set to true, the client and server discard any previous session state, starting with a clean slate.
      */
-    private boolean cleanSessionFlag = true;
+    private boolean cleanSessionFlag = false;
+
+    /**
+     * Flag indicating whether to use the mqtt 5.0 when connecting to MQTT broker.
+     */
+    private boolean mqttV5Flag = false;
 
     /**
      * The `connectionTimeout` represents the maximum time to wait for the MQTT connection to be established, in seconds.
      */
     private Integer connectionTimeout = 10;
+
+    /**
+     * The DT bound timeout (in seconds), connection lost time before going to un-bound state
+     */
+    private Integer boundTimeout = 10;
 
     /**
      * The `persistence` is an instance of `MqttClientPersistence` that determines how the client will persist state data
@@ -61,6 +83,10 @@ public class MqttDigitalAdapterConfiguration {
      */
     private MqttClientPersistence persistence = new MemoryPersistence();
 
+    /**
+     * The persistence mechanism used by the MQTT 5.0 client.
+     */
+    private org.eclipse.paho.mqttv5.client.MqttClientPersistence persistenceV5 = new org.eclipse.paho.mqttv5.client.persist.MemoryPersistence();
 
     /**
      * The `automaticReconnectFlag` is a boolean flag indicating whether the MQTT client should attempt to
@@ -103,6 +129,38 @@ public class MqttDigitalAdapterConfiguration {
 
     /**
      * Constructs an instance of the MqttDigitalAdapterConfiguration with the specified broker details.
+     *
+     * @param brokerAddress The address of the MQTT broker.
+     * @param brokerPort    The port of the MQTT broker.
+     * @param clientId      The client identifier for the MQTT connection.
+     * @param username      The client username for the MQTT connection.
+     * @param password      The client password for the MQTT connection.
+     */
+    protected MqttDigitalAdapterConfiguration(String brokerAddress, Integer brokerPort, String clientId, String username, String password) {
+        this.brokerAddress = brokerAddress;
+        this.brokerPort = brokerPort;
+        this.clientId = clientId;
+        this.username = username;
+        this.password = password;
+    }
+
+    /**
+     * Constructs an instance of the MqttDigitalAdapterConfiguration with the specified broker details.
+     *
+     * @param brokerAddress The address of the MQTT broker.
+     * @param brokerPort    The port of the MQTT broker.
+     * @param clientId      The client identifier for the MQTT connection.
+     * @param accessToken   The client access token for the MQTT connection.
+     */
+    public MqttDigitalAdapterConfiguration(String brokerAddress, Integer brokerPort, String clientId, String accessToken) {
+        this.brokerAddress = brokerAddress;
+        this.brokerPort = brokerPort;
+        this.clientId = clientId;
+        this.accessToken = accessToken;
+    }
+
+    /**
+     * Constructs an instance of the MqttDigitalAdapterConfiguration with the specified broker details.
      * The client identifier is generated automatically.
      *
      * @param brokerAddress The address of the MQTT broker.
@@ -127,6 +185,35 @@ public class MqttDigitalAdapterConfiguration {
 
     /**
      * Creates a builder for constructing instances of MqttDigitalAdapterConfiguration with specific parameters.
+     *
+     * @param brokerAddress The address of the MQTT broker.
+     * @param brokerPort    The port of the MQTT broker.
+     * @param clientId      The client identifier for the MQTT connection.
+     * @param username      The client username for the MQTT connection.
+     * @param password      The client password for the MQTT connection.
+     * @return A builder instance for MqttDigitalAdapterConfiguration.
+     * @throws MqttDigitalAdapterConfigurationException If there is an issue with the configuration.
+     */
+    public static MqttDigitalAdapterConfigurationBuilder builder(String brokerAddress, Integer brokerPort, String clientId, String username, String password) throws MqttDigitalAdapterConfigurationException {
+        return new MqttDigitalAdapterConfigurationBuilder(brokerAddress, brokerPort, clientId, username, password);
+    }
+
+    /**
+     * Creates a builder for constructing instances of MqttDigitalAdapterConfiguration with specific parameters.
+     *
+     * @param brokerAddress The address of the MQTT broker.
+     * @param brokerPort    The port of the MQTT broker.
+     * @param clientId      The client identifier for the MQTT connection.
+     * @param accessToken   The client access token for the MQTT connection.
+     * @return A builder instance for MqttDigitalAdapterConfiguration.
+     * @throws MqttDigitalAdapterConfigurationException If there is an issue with the configuration.
+     */
+    public static MqttDigitalAdapterConfigurationBuilder builder(String brokerAddress, Integer brokerPort, String clientId, String accessToken) throws MqttDigitalAdapterConfigurationException {
+        return new MqttDigitalAdapterConfigurationBuilder(brokerAddress, brokerPort, clientId, accessToken);
+    }
+
+    /**
+     * Creates a builder for constructing instances of MqttDigitalAdapterConfiguration with specific parameters.
      * The client identifier is generated automatically.
      *
      * @param brokerAddress The address of the MQTT broker.
@@ -136,6 +223,19 @@ public class MqttDigitalAdapterConfiguration {
      */
     public static MqttDigitalAdapterConfigurationBuilder builder(String brokerAddress, Integer brokerPort) throws MqttDigitalAdapterConfigurationException {
         return new MqttDigitalAdapterConfigurationBuilder(brokerAddress, brokerPort);
+    }
+
+    /**
+     * Creates a new MqttDigitalAdapterConfigurationBuilder for building MqttDigitalAdapterConfiguration instances
+     * with the json File from where read all the config.
+     *
+     * @param jsonFile The json File from where read all the config.
+     * @return The MqttDigitalAdapterConfigurationBuilder instance.
+     * @throws MqttDigitalAdapterConfigurationException If there is an issue creating the builder.
+     * @see MqttDigitalAdapterConfigurationBuilder
+     */
+    public static MqttDigitalAdapterConfigurationBuilder builder(File jsonFile) throws MqttDigitalAdapterConfigurationException {
+        return new MqttDigitalAdapterConfigurationBuilder(jsonFile);
     }
 
     /**
@@ -175,6 +275,13 @@ public class MqttDigitalAdapterConfiguration {
     }
 
     /**
+     * Gets the access token for authenticating with the MQTT broker.
+     *
+     * @return The access token.
+     */
+    public String getAccessToken() { return accessToken; }
+
+    /**
      * Gets the client identifier for the MQTT connection.
      *
      * @return The client identifier.
@@ -193,12 +300,48 @@ public class MqttDigitalAdapterConfiguration {
     }
 
     /**
+     * Gets the MQTT 5.0 Flag.
+     *
+     * @return The MQTT 5.0 Flag.
+     */
+    public boolean isMqttV5Flag() {
+        return mqttV5Flag;
+    }
+
+    /**
      * Gets the MQTT client persistence.
      *
      * @return The MQTT client persistence.
      */
     public MqttClientPersistence getPersistence() {
         return persistence;
+    }
+
+    /**
+     * Gets the persistence mechanism used by the MQTT 5.0 client.
+     *
+     * @return The MQTT 5.0 client persistence mechanism.
+     */
+    public org.eclipse.paho.mqttv5.client.MqttClientPersistence getPersistenceV5() {
+        return persistenceV5;
+    }
+
+    /**
+     * Gets the base topic.
+     *
+     * @return The Base topic.
+     */
+    public String getBaseTopic() {
+        return baseTopic;
+    }
+
+    /**
+     * Sets the DT bound timeout
+     *
+     * @return The time before DT state goes to un-bound
+     */
+    public Integer getBoundTimeout() {
+        return boundTimeout;
     }
 
     /**
@@ -214,6 +357,27 @@ public class MqttDigitalAdapterConfiguration {
         if(username != null && !username.isEmpty() && password != null && !password.isEmpty()){
             options.setUserName(username);
             options.setPassword(password.toCharArray());
+        } else if (accessToken != null && !accessToken.isEmpty()) {
+            options.setUserName(accessToken);
+        }
+        return options;
+    }
+
+    /**
+     * Gets the connection options for connecting to the MQTT broker.
+     *
+     * @return The MQTT connection options.
+     */
+    public MqttConnectionOptions getConnectOptionsV5(){
+        MqttConnectionOptions options = new MqttConnectionOptions();
+        options.setAutomaticReconnect(automaticReconnectFlag);
+        options.setCleanStart(cleanSessionFlag);
+        options.setConnectionTimeout(connectionTimeout);
+        if(username != null && !username.isEmpty() && password != null && !password.isEmpty()){
+            options.setUserName(username);
+            options.setPassword(password.getBytes());
+        } else if (accessToken != null && !accessToken.isEmpty()) {
+            options.setUserName(accessToken);
         }
         return options;
     }
@@ -234,6 +398,15 @@ public class MqttDigitalAdapterConfiguration {
      */
     protected void setCleanSessionFlag(boolean cleanSession) {
         this.cleanSessionFlag = cleanSession;
+    }
+
+    /**
+     * Sets the mqtt version flag.
+     *
+     * @param mqttV5Flag The mqtt version flag.
+     */
+    protected void setMqttV5Flag(boolean mqttV5Flag) {
+        this.mqttV5Flag = mqttV5Flag;
     }
 
     /**
@@ -279,5 +452,23 @@ public class MqttDigitalAdapterConfiguration {
      */
     public Map<String, ActionIncomingTopic<?>> getActionIncomingTopics() {
         return actionIncomingTopics;
+    }
+
+    /**
+     * Sets the Base topic.
+     *
+     * @param baseTopic The MQTT client persistence mechanism.
+     */
+    protected void setBaseTopic(String baseTopic) {
+        this.baseTopic = baseTopic;
+    }
+
+    /**
+     * Sets the DT bound timeout
+     *
+     * @param boundTimeout The time before DT state goes to un-bound
+     */
+    public void setBoundTimeout(Integer boundTimeout) {
+        this.boundTimeout = boundTimeout;
     }
 }

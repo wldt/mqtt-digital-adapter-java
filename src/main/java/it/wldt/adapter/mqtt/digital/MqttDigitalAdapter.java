@@ -5,16 +5,22 @@ import it.wldt.adapter.mqtt.digital.topic.outgoing.DigitalTwinOutgoingTopic;
 import it.wldt.adapter.mqtt.digital.topic.outgoing.EventNotificationOutgoingTopic;
 import it.wldt.adapter.mqtt.digital.topic.outgoing.PropertyOutgoingTopic;
 import it.wldt.adapter.digital.DigitalAdapter;
+import it.wldt.adapter.physical.PhysicalAssetDescription;
 import it.wldt.core.state.*;
 import it.wldt.exception.EventBusException;
+import it.wldt.exception.PhysicalAdapterException;
 import it.wldt.exception.WldtDigitalTwinStateEventException;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.*;
+import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
+import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -30,7 +36,19 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
     
     private final static Logger logger = LoggerFactory.getLogger(MqttDigitalAdapter.class);
     
-    private final MqttClient mqttClient;
+    private MqttClient mqttClient = null;
+
+    /** The MQTT client used for communication with the broker. */
+    private org.eclipse.paho.mqttv5.client.IMqttClient mqttClientV5 = null;
+
+//    /** The Scheduler Executor Service that runs the boundTimeoutScheduler */
+//    private final ScheduledExecutorService schedulerExecutorServiceBoundTimeout = Executors.newScheduledThreadPool(1);
+//
+//    /** The Scheduler that after the boundTimeout set the DT state to un-bound */
+//    private ScheduledFuture<?> boundTimeoutScheduler = null;
+//
+//    /** Indicates if the DT state is unbound due to lost connection to MQTT broker */
+//    private Boolean boundLostByConnectionTimeout = false;
 
     /**
      * Constructs an instance of the `MqttDigitalAdapter` class with the specified identifier and configuration.
@@ -42,9 +60,19 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
      */
     public MqttDigitalAdapter(String id, MqttDigitalAdapterConfiguration configuration) throws MqttException {
         super(id, configuration);
-        mqttClient = new MqttClient(getConfiguration().getBrokerConnectionString(),
-                getConfiguration().getClientId(),
-                getConfiguration().getPersistence());
+        if(getConfiguration().isMqttV5Flag()) {
+            try {
+                this.mqttClientV5 = new org.eclipse.paho.mqttv5.client.MqttClient(getConfiguration().getBrokerConnectionString(),
+                        getConfiguration().getClientId(),
+                        getConfiguration().getPersistenceV5());
+            } catch (org.eclipse.paho.mqttv5.common.MqttException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            this.mqttClient = new MqttClient(getConfiguration().getBrokerConnectionString(),
+                    getConfiguration().getClientId(),
+                    getConfiguration().getPersistence());
+        }
     }
 
     /**
@@ -116,10 +144,18 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
      */
     @Override
     public void onAdapterStop() {
-        try {
-            mqttClient.disconnect();
-        } catch (MqttException e) {
-            e.printStackTrace();
+        if(getConfiguration().isMqttV5Flag()) {
+            try {
+                mqttClientV5.disconnect();
+            } catch (org.eclipse.paho.mqttv5.common.MqttException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                mqttClient.disconnect();
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -205,14 +241,26 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
      * @param payload The message payload to be published.
      */
     private void publishOnDigitalTwinOutgoingTopic(DigitalTwinOutgoingTopic<?> topic, String payload){
-        try {
-            MqttMessage msg = new MqttMessage(payload.getBytes());
-            msg.setQos(topic.getQos());
-            msg.setRetained(topic.isRetained());
-            mqttClient.publish(topic.getTopic(), msg);
-            logger.info("MQTT Digital Adapter - MQTT client published message: {} on topic: {}", payload, topic.getTopic());
-        } catch (MqttException e) {
-            e.printStackTrace();
+        if(getConfiguration().isMqttV5Flag()) {
+            try {
+                org.eclipse.paho.mqttv5.common.MqttMessage msg = new org.eclipse.paho.mqttv5.common.MqttMessage(payload.getBytes());
+                msg.setQos(topic.getQos());
+                msg.setRetained(topic.isRetained());
+                mqttClientV5.publish(getConfiguration().getBaseTopic() + topic.getTopic(), msg);
+                logger.info("Physical Adapter - MQTT client published message: {} on topic: {}", payload, topic.getTopic());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                MqttMessage msg = new MqttMessage(payload.getBytes());
+                msg.setQos(topic.getQos());
+                msg.setRetained(topic.isRetained());
+                mqttClient.publish(getConfiguration().getBaseTopic() + topic.getTopic(), msg);
+                logger.info("Physical Adapter - MQTT client published message: {} on topic: {}", payload, topic.getTopic());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -223,21 +271,40 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
      * @param topic The Digital Twin incoming topic to subscribe to.
      */
     private void subscribeClientToDigitalTwinIncomingTopic(DigitalTwinIncomingTopic topic) {
-        try {
-            mqttClient.subscribe(topic.getTopic(), topic.getQos(), (t, msg) ->{
-                logger.info("MQTT Digital Adapter -receive message on topic: {}", t);
-                //TODO: evaluate improvement
-                new Thread(() -> {
-                    try {
-                        publishDigitalActionWldtEvent(topic.applySubscribeFunction(new String(msg.getPayload())));
-                    } catch (EventBusException e) {
-                        e.printStackTrace();
-                    }
-                }).start();
-            });
-            logger.info("MQTT Digital Adapter - MQTT client subscribed to topic: {}", topic.getTopic());
-        } catch (MqttException e) {
-            e.printStackTrace();
+        if(getConfiguration().isMqttV5Flag()) {
+            try {
+                mqttClientV5.subscribe(getConfiguration().getBaseTopic() + topic.getTopic(), topic.getQos(), (t, msg) ->{
+                    logger.info("MQTT Digital Adapter -receive message on topic: {}", t);
+                    //TODO: evaluate improvement
+                    new Thread(() -> {
+                        try {
+                            publishDigitalActionWldtEvent(topic.applySubscribeFunction(new String(msg.getPayload())));
+                        } catch (EventBusException e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                });
+                logger.info("MQTT Digital Adapter - MQTT client subscribed to topic: {}", topic.getTopic());
+            } catch (org.eclipse.paho.mqttv5.common.MqttException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                mqttClient.subscribe(getConfiguration().getBaseTopic() + topic.getTopic(), topic.getQos(), (t, msg) ->{
+                    logger.info("MQTT Digital Adapter -receive message on topic: {}", t);
+                    //TODO: evaluate improvement
+                    new Thread(() -> {
+                        try {
+                            publishDigitalActionWldtEvent(topic.applySubscribeFunction(new String(msg.getPayload())));
+                        } catch (EventBusException e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                });
+                logger.info("MQTT Digital Adapter - MQTT client subscribed to topic: {}", topic.getTopic());
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -246,11 +313,99 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
      * Logs information about the successful connection.
      */
     private void connectToMqttBroker(){
-        try {
-            mqttClient.connect(getConfiguration().getConnectOptions());
-            logger.info("MQTT Digital Adapter - MQTT client connected to broker - clientId: {}", getConfiguration().getClientId());
-        } catch (MqttException e) {
-            e.printStackTrace();
+        if(getConfiguration().isMqttV5Flag()) {
+            try {
+                mqttClientV5.setCallback(new org.eclipse.paho.mqttv5.client.MqttCallback() {
+                    @Override
+                    public void disconnected(MqttDisconnectResponse mqttDisconnectResponse) {
+                        logger.error("MQTT Digital Adapter - MQTT client connection lost to broker");
+                    }
+
+                    @Override
+                    public void mqttErrorOccurred(org.eclipse.paho.mqttv5.common.MqttException e) {
+
+                    }
+
+                    @Override
+                    public void messageArrived(String s, org.eclipse.paho.mqttv5.common.MqttMessage mqttMessage) throws Exception {
+
+                    }
+
+                    @Override
+                    public void deliveryComplete(org.eclipse.paho.mqttv5.client.IMqttToken iMqttToken) {
+
+                    }
+
+                    @Override
+                    public void connectComplete(boolean b, String s) {
+                        logger.info("MQTT Digital Adapter - MQTT client connected to broker - clientId: {}", getConfiguration().getClientId());
+
+//                    if(boundLostByConnectionTimeout) {
+//                        notifyDigitalAdapterBound();
+//                        boundLostByConnectionTimeout = false;
+//                    }
+//
+//                    if(boundTimeoutScheduler != null) {
+//                        boundTimeoutScheduler.cancel(true);
+//                        boundTimeoutScheduler = null;
+//                    }
+
+                    }
+
+                    @Override
+                    public void authPacketArrived(int i, MqttProperties mqttProperties) {
+
+                    }
+                });
+                mqttClientV5.connect(getConfiguration().getConnectOptionsV5());
+
+            } catch (org.eclipse.paho.mqttv5.common.MqttException e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                mqttClient.setCallback(new MqttCallbackExtended() {
+                    @Override
+                    public void connectComplete(boolean b, String s) {
+                        logger.info("MQTT Digital Adapter - MQTT client connected to broker - clientId: {}", getConfiguration().getClientId());
+
+//                    if(boundLostByConnectionTimeout) {
+//                        notifyDigitalAdapterBound();
+//                        boundLostByConnectionTimeout = false;
+//                    }
+//
+//                    if(boundTimeoutScheduler != null) {
+//                        boundTimeoutScheduler.cancel(true);
+//                        boundTimeoutScheduler = null;
+//                    }
+
+                    }
+
+                    @Override
+                    public void connectionLost(Throwable throwable) {
+                        logger.error("MQTT Digital Adapter - MQTT client connection lost to broker");
+
+//                    boundTimeoutScheduler = schedulerExecutorServiceBoundTimeout.schedule(() -> {
+//                        notifyDigitalAdapterUnBound("MQTT Digital Adapter - MQTT client connection lost to broker for more than " + getConfiguration().getBoundTimeout() + " seconds");
+//                        boundLostByConnectionTimeout = true;
+//                    }, (long) getConfiguration().getBoundTimeout(), TimeUnit.SECONDS);
+                    }
+
+                    @Override
+                    public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+
+                    }
+
+                    @Override
+                    public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+
+                    }
+                });
+                mqttClient.connect(getConfiguration().getConnectOptions());
+
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

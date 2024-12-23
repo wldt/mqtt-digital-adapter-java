@@ -1,0 +1,32 @@
+{
+  "broker": "127.0.0.1",
+  "port": 1883,
+  "username": "",
+  "password": "",
+  "access_token": "",
+  "client_id": "",
+  "base_topic": "",
+  "topic_list": [
+    {
+      "topic": "dummy/properties/energy",
+      "type": "property",
+      "property_key": "energy",
+      "qos": 0,
+      "function_type": "string"
+    },
+    {
+      "topic": "dummy/events/overheating/notifications",
+      "type": "event",
+      "event_key": "overheating",
+      "qos": 0,
+      "function_type": "string"
+    },
+    {
+      "topic": "dummy/properties/switch",
+      "type": "property",
+      "property_key": "switch",
+      "qos": 0,
+      "function_type": "string"
+    }
+  ]
+}

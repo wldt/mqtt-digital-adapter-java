@@ -7,6 +7,8 @@ import it.wldt.adapter.mqtt.digital.utils.DummyPhysicalAdapterConfiguration;
 import it.wldt.core.engine.DigitalTwin;
 import it.wldt.core.engine.DigitalTwinEngine;
 
+import java.io.File;
+
 /**
  * The `TestMain` class serves as the entry point for a demonstration of Digital Twin components. It creates a
  * Digital Twin instance, assigns a Dummy Physical Adapter to simulate physical variations, configures an MQTT Digital
@@ -35,11 +37,9 @@ public class TestMain {
                             true)
             );
 
+            File configFile = new File("config/MqttPhysicalAdapterConfiguration.json");
             // Build the MQTT Digital Adapter Configuration
-            MqttDigitalAdapterConfiguration configuration = MqttDigitalAdapterConfiguration.builder("127.0.0.1", 1883)
-                    .addPropertyTopic("energy", "dummy/properties/energy", MqttQosLevel.MQTT_QOS_0, value -> String.valueOf(((Double)value).intValue()))
-                    .addEventNotificationTopic("overheating", "dummy/events/overheating/notifications", MqttQosLevel.MQTT_QOS_0, Object::toString)
-                    .addPropertyTopic("switch", "dummy/properties/switch", MqttQosLevel.MQTT_QOS_0, Object::toString)
+            MqttDigitalAdapterConfiguration configuration = MqttDigitalAdapterConfiguration.builder(configFile)
                     .addActionTopic("switch_off", "app/actions/switch-off", msg -> "OFF")
                     .addActionTopic("switch_on", "app/actions/switch-on", msg -> "ON")
                     .build();
