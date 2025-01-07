@@ -41,15 +41,6 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
     /** The MQTT client used for communication with the broker. */
     private org.eclipse.paho.mqttv5.client.IMqttClient mqttClientV5 = null;
 
-//    /** The Scheduler Executor Service that runs the boundTimeoutScheduler */
-//    private final ScheduledExecutorService schedulerExecutorServiceBoundTimeout = Executors.newScheduledThreadPool(1);
-//
-//    /** The Scheduler that after the boundTimeout set the DT state to un-bound */
-//    private ScheduledFuture<?> boundTimeoutScheduler = null;
-//
-//    /** Indicates if the DT state is unbound due to lost connection to MQTT broker */
-//    private Boolean boundLostByConnectionTimeout = false;
-
     /**
      * Constructs an instance of the `MqttDigitalAdapter` class with the specified identifier and configuration.
      * It initializes the MQTT client with the provided broker connection details.
@@ -339,17 +330,6 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
                     @Override
                     public void connectComplete(boolean b, String s) {
                         logger.info("MQTT Digital Adapter - MQTT client connected to broker - clientId: {}", getConfiguration().getClientId());
-
-//                    if(boundLostByConnectionTimeout) {
-//                        notifyDigitalAdapterBound();
-//                        boundLostByConnectionTimeout = false;
-//                    }
-//
-//                    if(boundTimeoutScheduler != null) {
-//                        boundTimeoutScheduler.cancel(true);
-//                        boundTimeoutScheduler = null;
-//                    }
-
                     }
 
                     @Override
@@ -368,27 +348,11 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
                     @Override
                     public void connectComplete(boolean b, String s) {
                         logger.info("MQTT Digital Adapter - MQTT client connected to broker - clientId: {}", getConfiguration().getClientId());
-
-//                    if(boundLostByConnectionTimeout) {
-//                        notifyDigitalAdapterBound();
-//                        boundLostByConnectionTimeout = false;
-//                    }
-//
-//                    if(boundTimeoutScheduler != null) {
-//                        boundTimeoutScheduler.cancel(true);
-//                        boundTimeoutScheduler = null;
-//                    }
-
                     }
 
                     @Override
                     public void connectionLost(Throwable throwable) {
                         logger.error("MQTT Digital Adapter - MQTT client connection lost to broker");
-
-//                    boundTimeoutScheduler = schedulerExecutorServiceBoundTimeout.schedule(() -> {
-//                        notifyDigitalAdapterUnBound("MQTT Digital Adapter - MQTT client connection lost to broker for more than " + getConfiguration().getBoundTimeout() + " seconds");
-//                        boundLostByConnectionTimeout = true;
-//                    }, (long) getConfiguration().getBoundTimeout(), TimeUnit.SECONDS);
                     }
 
                     @Override

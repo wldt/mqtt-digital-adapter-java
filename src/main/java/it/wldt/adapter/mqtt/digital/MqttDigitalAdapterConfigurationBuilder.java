@@ -25,6 +25,28 @@ import java.util.function.Function;
  */
 public class MqttDigitalAdapterConfigurationBuilder {
 
+    /** Static keys of File configuration map **/
+    private static final String WLDT_TYPE_MAP = "type";
+    private static final String QOS_TYPE_MAP = "qos";
+    private static final String FUNCTION_TYPE_MAP = "function_type";
+    private static final String PROPERTY_MAP = "property";
+    private static final String PROPERTY_KEY_MAP = "property_key";
+    private static final String PROPERTY_INITIAL_VALUE_MAP = "initial_value";
+    private static final String PROPERTY_TOPIC_MAP = "topic";
+    private static final String EVENT_MAP = "event";
+    private static final String EVENT_KEY_MAP = "event_key";
+    private static final String EVENT_INITIAL_VALUE_MAP = "initial_value";
+    private static final String EVENT_TOPIC_MAP = "topic";
+    private static final String ACTION_MAP = "action";
+    private static final String ACTION_KEY_MAP = "action_key";
+    private static final String ACTION_INITIAL_VALUE_MAP = "initial_value";
+    private static final String ACTION_TOPIC_MAP = "topic";
+    private static final String NUMERIC_TYPE_MAP = "number";
+    private static final String STRING_TYPE_MAP = "string";
+    private static final String BOOLEAN_TYPE_MAP = "boolean";
+    private static final String BYTES_TYPE_MAP = "bytes";
+    private static final String JSON_TYPE_MAP = "json";
+
     /**
      * The `configuration` holds the partially built configuration that is being constructed by the builder.
      */
@@ -118,66 +140,66 @@ public class MqttDigitalAdapterConfigurationBuilder {
             for (HashMap<String, Object> topicMap : fileConfig.getMqttTopicList()) {
 
                 MqttQosLevel qosLevel = null;
-                if((int) topicMap.get("qos") == 0) {
+                if((int) topicMap.get(QOS_TYPE_MAP) == 0) {
                     qosLevel = MqttQosLevel.MQTT_QOS_0;
-                } else if ((int) topicMap.get("qos") == 1) {
+                } else if ((int) topicMap.get(QOS_TYPE_MAP) == 1) {
                     qosLevel = MqttQosLevel.MQTT_QOS_1;
-                } else if ((int) topicMap.get("qos") == 2) {
+                } else if ((int) topicMap.get(QOS_TYPE_MAP) == 2) {
                     qosLevel = MqttQosLevel.MQTT_QOS_2;
                 }
 
-                if(topicMap.get("type").equals("property")) {
-                    if(topicMap.get("function_type").equals("number")) {
-                        if(topicMap.get("initial_value") instanceof Integer) {
-                            addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, value -> Integer.toString((int) value));
-                        } else if (topicMap.get("initial_value") instanceof Double) {
-                            addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, value -> Double.toString((double) value));
+                if(topicMap.get(WLDT_TYPE_MAP).equals(PROPERTY_MAP)) {
+                    if(topicMap.get(FUNCTION_TYPE_MAP).equals(NUMERIC_TYPE_MAP)) {
+                        if(topicMap.get(PROPERTY_INITIAL_VALUE_MAP) instanceof Integer) {
+                            addPropertyTopic((String) topicMap.get(PROPERTY_KEY_MAP), (String) topicMap.get(PROPERTY_TOPIC_MAP), qosLevel, value -> Integer.toString((int) value));
+                        } else if (topicMap.get(PROPERTY_INITIAL_VALUE_MAP) instanceof Double) {
+                            addPropertyTopic((String) topicMap.get(PROPERTY_KEY_MAP), (String) topicMap.get(PROPERTY_TOPIC_MAP), qosLevel, value -> Double.toString((double) value));
                         }
-                    } else if(topicMap.get("function_type").equals("string")) {
-                        addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, String::valueOf);
-                    } else if(topicMap.get("function_type").equals("boolean")) {
-                        addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, value -> Boolean.toString((boolean) value));
-                    } else if(topicMap.get("function_type").equals("bytes")) {
-                        addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, MqttDigitalAdapterConfigurationBuilder::fromStringToBytes);
-                    } else if(topicMap.get("function_type").equals("json")) {
-                        addPropertyTopic((String) topicMap.get("property_key"), (String) topicMap.get("topic"), qosLevel, ObjectNode::toString);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(STRING_TYPE_MAP)) {
+                        addPropertyTopic((String) topicMap.get(PROPERTY_KEY_MAP), (String) topicMap.get(PROPERTY_TOPIC_MAP), qosLevel, String::valueOf);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(BOOLEAN_TYPE_MAP)) {
+                        addPropertyTopic((String) topicMap.get(PROPERTY_KEY_MAP), (String) topicMap.get(PROPERTY_TOPIC_MAP), qosLevel, value -> Boolean.toString((boolean) value));
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(BYTES_TYPE_MAP)) {
+                        addPropertyTopic((String) topicMap.get(PROPERTY_KEY_MAP), (String) topicMap.get(PROPERTY_TOPIC_MAP), qosLevel, MqttDigitalAdapterConfigurationBuilder::fromStringToBytes);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(JSON_TYPE_MAP)) {
+                        addPropertyTopic((String) topicMap.get(PROPERTY_KEY_MAP), (String) topicMap.get(PROPERTY_TOPIC_MAP), qosLevel, ObjectNode::toString);
                     } else {
                         throw new MqttDigitalAdapterConfigurationException("Wrong function type passed in file configuration. Property function can be number, string, boolean, bytes or json");
                     }
-                } else if(topicMap.get("type").equals("event")) {
-                    if(topicMap.get("function_type").equals("number")) {
-                        if(topicMap.get("initial_value") instanceof Integer) {
-                            addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, value -> Integer.toString((int) value));
-                        } else if (topicMap.get("initial_value") instanceof Double) {
-                            addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, value -> Double.toString((double) value));
+                } else if(topicMap.get(WLDT_TYPE_MAP).equals(EVENT_MAP)) {
+                    if(topicMap.get(FUNCTION_TYPE_MAP).equals(NUMERIC_TYPE_MAP)) {
+                        if(topicMap.get(EVENT_INITIAL_VALUE_MAP) instanceof Integer) {
+                            addEventNotificationTopic((String) topicMap.get(EVENT_KEY_MAP), (String) topicMap.get(EVENT_TOPIC_MAP), qosLevel, value -> Integer.toString((int) value));
+                        } else if (topicMap.get(EVENT_INITIAL_VALUE_MAP) instanceof Double) {
+                            addEventNotificationTopic((String) topicMap.get(EVENT_KEY_MAP), (String) topicMap.get(EVENT_TOPIC_MAP), qosLevel, value -> Double.toString((double) value));
                         }
-                    } else if(topicMap.get("function_type").equals("string")) {
-                        addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, String::valueOf);
-                    } else if(topicMap.get("function_type").equals("boolean")) {
-                        addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, value -> Boolean.toString((boolean) value));
-                    } else if(topicMap.get("function_type").equals("bytes")) {
-                        addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, MqttDigitalAdapterConfigurationBuilder::fromStringToBytes);
-                    } else if(topicMap.get("function_type").equals("json")) {
-                        addEventNotificationTopic((String) topicMap.get("event_key"), (String) topicMap.get("topic"), qosLevel, ObjectNode::toString);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(STRING_TYPE_MAP)) {
+                        addEventNotificationTopic((String) topicMap.get(EVENT_KEY_MAP), (String) topicMap.get(EVENT_TOPIC_MAP), qosLevel, String::valueOf);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(BOOLEAN_TYPE_MAP)) {
+                        addEventNotificationTopic((String) topicMap.get(EVENT_KEY_MAP), (String) topicMap.get(EVENT_TOPIC_MAP), qosLevel, value -> Boolean.toString((boolean) value));
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(BYTES_TYPE_MAP)) {
+                        addEventNotificationTopic((String) topicMap.get(EVENT_KEY_MAP), (String) topicMap.get(EVENT_TOPIC_MAP), qosLevel, MqttDigitalAdapterConfigurationBuilder::fromStringToBytes);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(JSON_TYPE_MAP)) {
+                        addEventNotificationTopic((String) topicMap.get(EVENT_KEY_MAP), (String) topicMap.get(EVENT_TOPIC_MAP), qosLevel, ObjectNode::toString);
                     } else {
                         throw new MqttDigitalAdapterConfigurationException("Wrong function type passed in file configuration. Event function can be number, string, boolean, bytes or json");
                     }
-                } else if(topicMap.get("type").equals("action")) {
-                    if(topicMap.get("function_type").equals("number")) {
-                        if(topicMap.get("initial_value") instanceof Integer) {
-                            addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), Integer::parseInt);
-                        } else if (topicMap.get("initial_value") instanceof Double) {
-                            addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), Double::parseDouble);
+                } else if(topicMap.get(WLDT_TYPE_MAP).equals(ACTION_MAP)) {
+                    if(topicMap.get(FUNCTION_TYPE_MAP).equals(NUMERIC_TYPE_MAP)) {
+                        if(topicMap.get(ACTION_INITIAL_VALUE_MAP) instanceof Integer) {
+                            addActionTopic((String) topicMap.get(ACTION_KEY_MAP), (String) topicMap.get(ACTION_TOPIC_MAP), Integer::parseInt);
+                        } else if (topicMap.get(ACTION_INITIAL_VALUE_MAP) instanceof Double) {
+                            addActionTopic((String) topicMap.get(ACTION_KEY_MAP), (String) topicMap.get(ACTION_TOPIC_MAP), Double::parseDouble);
                         }
-                    } else if(topicMap.get("function_type").equals("string")) {
-                        addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), String::valueOf);
-                    } else if(topicMap.get("function_type").equals("boolean")) {
-                        addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), Boolean::parseBoolean);
-                    } else if(topicMap.get("function_type").equals("bytes")) {
-                        addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), MqttDigitalAdapterConfigurationBuilder::parseBytesFromString);
-                    } else if(topicMap.get("function_type").equals("json")) {
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(STRING_TYPE_MAP)) {
+                        addActionTopic((String) topicMap.get(ACTION_KEY_MAP), (String) topicMap.get(ACTION_TOPIC_MAP), String::valueOf);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(BOOLEAN_TYPE_MAP)) {
+                        addActionTopic((String) topicMap.get(ACTION_KEY_MAP), (String) topicMap.get(ACTION_TOPIC_MAP), Boolean::parseBoolean);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(BYTES_TYPE_MAP)) {
+                        addActionTopic((String) topicMap.get(ACTION_KEY_MAP), (String) topicMap.get(ACTION_TOPIC_MAP), MqttDigitalAdapterConfigurationBuilder::parseBytesFromString);
+                    } else if(topicMap.get(FUNCTION_TYPE_MAP).equals(JSON_TYPE_MAP)) {
                         ObjectMapper mapper = new ObjectMapper();
-                        addActionTopic((String) topicMap.get("action_key"), (String) topicMap.get("topic"), value -> {
+                        addActionTopic((String) topicMap.get(ACTION_KEY_MAP), (String) topicMap.get(ACTION_TOPIC_MAP), value -> {
                             try {
                                 return mapper.readTree(value);
                             } catch (JsonProcessingException e) {
@@ -195,6 +217,12 @@ public class MqttDigitalAdapterConfigurationBuilder {
         }
     }
 
+    /**
+     * Transform a String Byte Array in a byte[]
+     *
+     * @param intArrayString Is the Bytes Array in String
+     * @return a byte[] representing the initial Byte Array in String
+     */
     private static byte[] parseBytesFromString(String intArrayString) {
 
         if (intArrayString.trim().equals("[]")) {
@@ -218,6 +246,12 @@ public class MqttDigitalAdapterConfigurationBuilder {
         }
     }
 
+    /**
+     * Transform a Byte Array in a String
+     *
+     * @param byteArray Is the Bytes Array
+     * @return a String representing the initial Byte Array
+     */
     private static String fromStringToBytes(byte[] byteArray) {
         if (byteArray.length == 0) {
             return "[]"; // Return an empty array representation
@@ -234,6 +268,13 @@ public class MqttDigitalAdapterConfigurationBuilder {
         return sb.toString();
     }
 
+    /**
+     * Read a json File and store data inside a MqttPhysicalAdapterFileConfiguration class which is returned.
+     *
+     * @param jsonFile is the File that must be read to get configuration.
+     * @return an MqttPhysicalAdapterFileConfiguration that contains all the config info inside the File.
+     * @throws MqttDigitalAdapterConfigurationException If there is a configuration error.
+     */
     private MqttDigitalAdapterFileConfiguration getMqttFileConfiguration(File jsonFile) throws MqttDigitalAdapterConfigurationException {
         try {
             ObjectMapper objectMapper = new ObjectMapper();

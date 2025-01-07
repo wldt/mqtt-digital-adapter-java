@@ -37,7 +37,7 @@ public class TestMain {
                             true)
             );
 
-            File configFile = new File("config/MqttPhysicalAdapterConfiguration.json");
+            File configFile = new File("src/test/config/MqttPhysicalAdapterConfiguration.json");
             // Build the MQTT Digital Adapter Configuration
             MqttDigitalAdapterConfiguration configuration = MqttDigitalAdapterConfiguration.builder(configFile)
                     .addActionTopic("switch_off", "app/actions/switch-off", msg -> "OFF")
@@ -56,7 +56,7 @@ public class TestMain {
             // Start all the DTs registered on the engine
             digitalTwinEngine.startAll();
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
