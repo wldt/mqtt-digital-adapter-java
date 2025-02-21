@@ -45,6 +45,7 @@ public class TestMain {
                     .build();
 
             // Add the MQTT Digital Adapter to the target Digital Twin
+            //configuration.setMqttV5Flag(true);
             digitalTwin.addDigitalAdapter(new MqttDigitalAdapter("test-da", configuration));
 
             // Create the Digital Twin Engine to execute the created DT instance

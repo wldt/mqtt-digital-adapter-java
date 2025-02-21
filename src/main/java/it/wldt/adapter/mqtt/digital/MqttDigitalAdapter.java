@@ -1,5 +1,6 @@
 package it.wldt.adapter.mqtt.digital;
 
+import it.wldt.adapter.mqtt.digital.topic.incoming.ActionIncomingTopic;
 import it.wldt.adapter.mqtt.digital.topic.incoming.DigitalTwinIncomingTopic;
 import it.wldt.adapter.mqtt.digital.topic.outgoing.DigitalTwinOutgoingTopic;
 import it.wldt.adapter.mqtt.digital.topic.outgoing.EventNotificationOutgoingTopic;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -264,17 +266,7 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
     private void subscribeClientToDigitalTwinIncomingTopic(DigitalTwinIncomingTopic topic) {
         if(getConfiguration().isMqttV5Flag()) {
             try {
-                mqttClientV5.subscribe(getConfiguration().getBaseTopic() + topic.getTopic(), topic.getQos(), (t, msg) ->{
-                    logger.info("MQTT Digital Adapter -receive message on topic: {}", t);
-                    //TODO: evaluate improvement
-                    new Thread(() -> {
-                        try {
-                            publishDigitalActionWldtEvent(topic.applySubscribeFunction(new String(msg.getPayload())));
-                        } catch (EventBusException e) {
-                            e.printStackTrace();
-                        }
-                    }).start();
-                });
+                mqttClientV5.subscribe(getConfiguration().getBaseTopic() + topic.getTopic(), topic.getQos());
                 logger.info("MQTT Digital Adapter - MQTT client subscribed to topic: {}", topic.getTopic());
             } catch (org.eclipse.paho.mqttv5.common.MqttException e) {
                 e.printStackTrace();
@@ -318,8 +310,17 @@ public class MqttDigitalAdapter extends DigitalAdapter<MqttDigitalAdapterConfigu
                     }
 
                     @Override
-                    public void messageArrived(String s, org.eclipse.paho.mqttv5.common.MqttMessage mqttMessage) throws Exception {
-
+                    public void messageArrived(String s, org.eclipse.paho.mqttv5.common.MqttMessage msg) throws Exception {
+                        logger.info("MQTT Digital Adapter - receive message on topic: {}", s);
+                            new Thread(() -> getConfiguration().getActionIncomingTopics().forEach((key, value) -> {
+                                if ((getConfiguration().getBaseTopic() + value.getTopic()).equals(s)) {
+                                    try {
+                                        publishDigitalActionWldtEvent(value.applySubscribeFunction(new String(msg.getPayload())));
+                                    } catch (EventBusException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+                            })).start();
                     }
 
                     @Override
